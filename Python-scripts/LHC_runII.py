@@ -1,12 +1,11 @@
 #!/usr/bin/python
+# use "./LHC_runII.py launch" to launch the impedance model calculation
+# use "./LHC_runII.py retrieve" to retrieve the impedance model results
+# use "./LHC_runII.py restore launch" to restore impedance model results and launch DELPHI scans
+# use "./LHC_runII.py restore retrieve" to retrieve the results of DELPHI scans
 
 import sys
 import commands
-# import local libraries if needed
-#pymod=commands.getoutput("echo $PYMOD");
-#if pymod.startswith('local'):
-#    py_numpy=commands.getoutput("echo $PY_NUMPY");sys.path.insert(1,py_numpy);
-#    py_matpl=commands.getoutput("echo $PY_MATPL");sys.path.insert(1,py_matpl);
 
 if len(sys.argv)>2: lxplusbatchImp=str(sys.argv[1]);lxplusbatchDEL=str(sys.argv[2]);
 elif len(sys.argv)>1: lxplusbatchImp=str(sys.argv[1]);lxplusbatchDEL=None;
@@ -26,9 +25,7 @@ from particle_param import *
 from Impedance import *
 from DELPHI import *
 from LHC_param import *
-from HLLHC_param import *
 from LHC_imp import *
-from HLLHC_imp import *
 from LHC_coll_imp import *
 
 
@@ -38,20 +35,20 @@ if __name__ == "__main__":
     e,m0,c,E0=proton_param();
 
     # machine parameters
-    machine2save='HLLHC';
+    machine2save='LHC'; 
     beam='1';
 
-    # directory (inside DELPHI_results/[machine]) where to put the results
-    RunDir='IP7-coatings_DQW-IP15/';
-    ResultDir=path_here+'../../../DELPHI_results/'+machine2save+'/'+RunDir;
-    ResultDir2012=path_here+'../../../DELPHI_results/'+machine2save+'/'+RunDir;
+    # subdirectory (inside DELPHI_results/[machine2save]) where to put the results
+    RunDir='RunII/';
+    ResultDir='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
+    ResultDir2012='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
     os.system("mkdir -p "+ResultDir);
 
     # flags for plotting and DELPHI
     flagdamperimp=0; # 1 to use frequency dependent damper gain (provided in Zd,fd)
     strnorm=[''];
     flagnorm=0; # 1 if damper matrix normalized at current chromaticity (instead of at zero chroma)
-    flagplot=True; # to plot impedances
+    flagplot=True; # to write impedance files by elements
     nevery=1; # downsampling of the impedance (take less points than in the full model)
     wake_calc=False; # True -> compute wake as well (otherwise only imp.)
 
@@ -62,63 +59,47 @@ if __name__ == "__main__":
     linetype=['-','--',':'];
 
     # scan definition
-    strsubscan='_LHC_v2_all_postLS1_options';margin_factor=1;
-    scenarioscan=np.array([
-	    'HL-LHC_15cm_7TeV_baseline_TCT5_B1',
-	    'HL-LHC_15cm_7TeV_MoC_IP7_TCT5_B1',
-	    'HL-LHC_15cm_7TeV_5umTiB2+MoC_IP7_TCT5_B1',
-	    'HL-LHC_15cm_7TeV_5umMo+MoC_IP7_TCT5_B1',
-	    'HL-LHC_15cm_7TeV_5umTiN+MoC_IP7_TCT5_B1',
-	    'HL-LHC_15cm_7TeV_5umMo+MoC_IP7_TCT5_IR3_open_B1',
-	    'HL-LHC_15cm_7TeV_5umMo+MoC_IP3+IP7_TCT5_B1',]);
+    scenarioscan=np.array(['LHC_ft_6.5TeV_B1_2016']) # name in Coll_settings without ".txt"
 
     print scenarioscan
-    dircollscan=scenarioscan; # name of the subdirectory in ImpedanceWake2D
+    dircollscan=scenarioscan; # name of the subdirectory created in ImpedanceWake2D folder
     
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2012/LHC-squeeze60cm/'
+    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2012/LHC-squeezer60cm/'
+    
     LHC2012_60cm=optics_dir+'LHC_beta_length_B'+beam+'_sq0p6m_3m_0p6m_3m.dat';
     
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2016/LHC-squeeze50cm/'
+    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2016/LHC-squeeze50cm/'
     LHC2016_50cm=optics_dir+'/twiss.lhc.b'+beam+'.coll6.5tev_50cm.thick_beta_elements.dat';
     
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2016/LHC-squeeze40cm/'
+    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2016/LHC-squeeze40cm/'
     LHC2016_40cm=optics_dir+'twiss.lhc.b'+beam+'.coll6.5tev_40cm.thick_beta_elements.dat';
     
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2015/LHC-squeeze80cm/'
-    LHC2015_80cm=optics_dir+'twiss.lhc.b'+beam+'.coll6.5tev_80cm.thick_beta_elements.dat';
     
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2015/LHC-injection'
-    LHC2015_inj=optics_dir+'/twiss.lhc.b'+beam+'.inj450gev.thick_beta_elements.dat';
-
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2015/LHC-ft'
+    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2015/LHC-ft'
     LHC2015_ft=optics_dir+'/twiss.lhc.b'+beam+'.ft6.5tev.thick_beta_elements.dat';
-	
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2015/HLLHCV1.1'
-    HLLHC_15cm=optics_dir+'/twiss.hllhc.b'+beam+'.coll7tev_round.thick_beta_elements.dat';
-
-    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2015/HLLHC-squeeze60cm/'
-    HLLHC_60cm=optics_dir+'twiss.hllhc.b'+beam+'.coll7tev_squeeze60cm.thick_beta_elements.dat';
     
-    squeezescan=np.array([HLLHC_15cm for ii in scenarioscan])
+    squeezescan=np.array([LHC2015_ft for ii in scenarioscan])
 
-    model=['HLLHC 25ns'  for ii in scenarioscan];
-    Escan=np.array([7000e9 for ii in scenarioscan]); # Energy
+    model=['Nominal LHC'  for ii in scenarioscan]; # case in LHC_param
+    Escan=np.array([6500e9 for ii in scenarioscan]); # Energy
     #subscan=np.array([0])
     subscan=np.arange(0,len(Escan))
     print subscan
 
-    param_filename_coll_root=path_here+'Coll_settings/'; #name collgap file
-    planes=['x','y'];
-    Qpscan=np.arange(14,17,1);
-    dampscan=np.array([0.02]); # damper gain scan
-    Nbscan=np.array([1e10, 1.1e11, 2.1e11, 3.1e11, 4.1e11])
-    Mscan=np.array([1]); # scan on number of bunches
-
-
-    # stabilizing emittance from 2012
-    estimation_scale_2012=1; # for intensity vs emittance data
+    param_filename_coll_root=path_here+'../Coll_settings/'; # path for collimator gaps file
     
-    Qpaver=np.array([14,15,16]); # for stability limits
+    # setting the scans
+    planes=['x','y'];
+    Qpscan=np.arange(-3,4,1);
+    dampscan=np.array([0, 0.02]); # damper gain scan
+    Nbscan=np.array([1e10, 1.e11, 2.e11, 3.e11, 4.e11, 5.e11, 6.e11, 7.e11])
+    Mscan=np.array([1]); # scan on number of bunches
+    imp_fact=1. #impedance factor
+
+
+    estimation_scale_2012=0; # to deduce intensity vs emittance curves based on 2012 instabilites
+    
+    Qpaver=np.array([-1,0,1]); # averages between these chromas to deduce the stability limits in the intensity vs emittance plot
     iQpaver=select_in_table(Qpaver,Qpscan);
 
     # initialize impedance model and tune shifts
@@ -136,9 +117,7 @@ if __name__ == "__main__":
 	if machine2save=='LHC':
 		machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h, M,en=LHC_param(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
         	machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
-	elif machine2save=='HLLHC':
-		machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h,M,en=HLLHC_param(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]]);
-	        machine=HLLHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
+	
 	g,a,b=longdistribution_decomp(taub,typelong="Gaussian");
         avbetax=R/Qx;avbetay=R/Qy; # average beta functions used
         print "scenario: ",scenario
@@ -152,11 +131,9 @@ if __name__ == "__main__":
 
 
             imp_mod=[]; wake_mod=[];
-	    if machine2save=='HLLHC':
-                imp_mod,wake_mod=HLLHC_imp_model_v2(machine, E,avbetax,avbetay,param_filename_coll,settings_filename_coll,dire=path_here+"LHC_elements/",commentcoll=comment_coll_machine,direcoll=dircollscan[subscan[iscenario]]+'/',lxplusbatch=lxplusbatchImp,beam=beam,squeeze=squeezescan[subscan[iscenario]],wake_calc=wake_calc,BPM=False,optionCrab=['DQW_20151001','DQW_20151001'], optics_dir=optics_dir, Ncav=4 ,optionBBC=0,margin_factor=1,fcutoffBB=50e9,flagplot=flagplot,root_result=root_result,commentsave=scenario);
 
-            elif machine2save=='LHC':
-                imp_mod,wake_mod=LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_coll,dire=path_here+"LHC_elements/",commentcoll=comment_coll_machine,direcoll=dircollscan[subscan[iscenario]]+'/',lxplusbatch=lxplusbatchImp,beam=beam,squeeze=squeezescan[subscan[iscenario]],wake_calc=wake_calc,flagplot=flagplot,root_result=root_result,commentsave=scenario);
+            if machine2save=='LHC':
+                imp_mod,wake_mod=LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_coll,dire=path_here+"../LHC_elements/",commentcoll=comment_coll_machine,direcoll=dircollscan[subscan[iscenario]]+'/',lxplusbatch=lxplusbatchImp,beam=beam,squeeze=squeezescan[subscan[iscenario]],wake_calc=wake_calc,flagplot=flagplot,root_result=root_result,commentsave=scenario);
 
 
         elif (lxplusbatchImp.startswith('restore')):
@@ -164,17 +141,13 @@ if __name__ == "__main__":
             imp_mod=[]; wake_mod=[];
 	    suffix='_Allthemachine_'+Estr+'_B'+beam+'_'+scenario+'.dat';
             freq_mod,Z_mod=readZ(root_result+"Zxdip"+suffix);
-            if 'fact2' in scenario:
-		    Z_mod=Z_mod*2;
-		    print scenario+': Impedance x-plane multiplied by 2.'
+	    Z_mod*=imp_fact
 
 	    imp_mod.append(impedance_wake(a=1,b=0,c=0,d=0,plane='x',var=freq_mod,func=Z_mod));
 
             freq_mod,Z_mod=readZ(root_result+"Zydip"+suffix);
+	    Z_mod*=imp_fact
 		
-	    if 'fact2' in scenario:
-		    Z_mod=Z_mod*2;
-		    print scenario+': Impedance y-plane multiplied by 2.'
 
             imp_mod.append(impedance_wake(a=0,b=1,c=0,d=0,plane='y',var=freq_mod,func=Z_mod));
 
@@ -211,9 +184,6 @@ if __name__ == "__main__":
 		    if model[subscan[iscenario]]=='LHC':
 		    	machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h,M,en=LHC_param(E0,E=Escan[subscan[iscenario]]);
 		        machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
-		    elif model[subscan[iscenario]]=='HLLHC':
-                        machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h,M,en=HLLHC_param(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]]);
-                        machine=HLLHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
 
 		    # DELPHI run
 		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV',queue='1nw',dire=root_result+'/',flagQpscan_outside=True);
@@ -328,8 +298,8 @@ if estimation_scale_2012==1:
 
     # compute first with 2012 imp. model
     scenario2012='LHC_60cm_4TeV_2012_B1';
-    LHC2012_60cm='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/Getting_LHC_beta_functions/2012/LHC-squeeze60cm/LHC_beta_length_B'+beam+'_sq0p6m_3m_0p6m_3m.dat';
-    param_filename_coll_2012=path_here+'Coll_settings/'+scenario2012+'.txt';
+    LHC2012_60cm='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2012/LHC-squeeze60cm/LHC_beta_length_B'+beam+'_sq0p6m_3m_0p6m_3m.dat';
+    param_filename_coll_2012=path_here+'../Coll_settings/'+scenario2012+'.txt';
     settings_filename_coll_2012=param_filename_coll_2012;
     comment_coll_machine=scenario2012;
 
@@ -355,7 +325,7 @@ if estimation_scale_2012==1:
 
         wake_mod_2012.append(wake_mod);
     else:
-        imp_mod_2012,wake_mod_2012=LHC_imp_model_v2(E_2012,avbetax_2012,avbetay_2012,param_filename_coll_2012,settings_filename_coll_2012,dire=path_here+"LHC_elements/",commentcoll=scenario2012,direcoll='LHC_60cm_4TeV_2012_B1/',lxplusbatch=lxplusbatchImp,beam=beam,squeeze=LHC2012_60cm,wake_calc=wake_calc,flagplot=flagplot,root_result=root_result2012,commentsave=scenario2012)
+        imp_mod_2012,wake_mod_2012=LHC_imp_model_v2(E_2012,avbetax_2012,avbetay_2012,param_filename_coll_2012,settings_filename_coll_2012,dire=path_here+"../LHC_elements/",commentcoll=scenario2012,direcoll='LHC_60cm_4TeV_2012_B1/',lxplusbatch=lxplusbatchImp,beam=beam,squeeze=LHC2012_60cm,wake_calc=wake_calc,flagplot=flagplot,root_result=root_result2012,commentsave=scenario2012)
 
     # longitudinal distribution initialization
     g,a,b=longdistribution_decomp(taub,typelong="Gaussian");

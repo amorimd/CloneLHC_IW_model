@@ -1,0 +1,4 @@
+mv /afs/cern.ch/work/n/nbiancac/scratch0/IRIS/LHC_IW_model/Python-scripts//DELPHI_pickle_LHCLHC_ft_6.5TeV_B1_2016_6500GeV_1b_Qp2_x.dat .
+DELPHI_script.py DELPHI_pickle_LHCLHC_ft_6.5TeV_B1_2016_6500GeV_1b_Qp2_x.dat > out_LHCLHC_ft_6.5TeV_B1_2016_6500GeV_1b_Qp2_x
+cp outDELPHI_pickle_LHCLHC_ft_6.5TeV_B1_2016_6500GeV_1b_Qp2_x.dat /afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/LHC/RunII/LHC_ft_6.5TeV_B1_2016/
+cp out_LHCLHC_ft_6.5TeV_B1_2016_6500GeV_1b_Qp2_x /afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/LHC/RunII/LHC_ft_6.5TeV_B1_2016/
