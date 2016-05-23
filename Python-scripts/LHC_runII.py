@@ -53,7 +53,7 @@ if __name__ == "__main__":
     wake_calc=False; # True -> compute wake as well (otherwise only imp.)
 
 
-    kmax=1; # number of converged eigenvalues (kmax most unstable ones are converged)
+    kmax=5; # number of converged eigenvalues (kmax most unstable ones are converged)
     kmaxplot=20; # number of kept and plotted eigenvalues (in TMCI plot)
     col=['b','r','g','m','k','c','y','b--','r--','g--','m--','k--','c--','y--']; # colors
     linetype=['-','--',':'];
@@ -90,11 +90,11 @@ if __name__ == "__main__":
     
     # setting the scans
     planes=['x','y'];
-    Qpscan=np.arange(-3,4,1);
-    dampscan=np.array([0, 0.02]); # damper gain scan
-    Nbscan=np.array([1e10, 1.e11, 2.e11, 3.e11, 4.e11, 5.e11, 6.e11, 7.e11])
+    Qpscan=np.arange(-5,6,1);
+    dampscan=np.array([0, 0.005, 0.01, 0.02]); # damper gain scan
+    Nbscan=np.arange(2.5e10, 7.5e11, 2.5e10)
     Mscan=np.array([1]); # scan on number of bunches
-    imp_fact=1. #impedance factor
+    imp_fact=3. #impedance factor
 
 
     estimation_scale_2012=0; # to deduce intensity vs emittance curves based on 2012 instabilites
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 		        machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
 
 		    # DELPHI run
-		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV',queue='1nw',dire=root_result+'/',flagQpscan_outside=True);
+		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV_Z'+str(imp_fact),queue='1nw',dire=root_result+'/',flagQpscan_outside=True);
 
 
 	    # now the most unstable modes
