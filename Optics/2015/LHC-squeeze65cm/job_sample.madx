@@ -1,0 +1,61 @@
+option, warn,info;
+system,"rm -rf temp"; system,"mkdir temp";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/opt_med/ db5";
+
+Option, -echo,-warn,-info;
+call,file="db5/V6.5.seq";
+Option, -echo,warn,-info;
+
+call,file="db5/toolkit/macro.madx";
+
+NRJ=450;
+Beam,particle=proton,energy=NRJ,sequence=lhcb1,bv= 1;
+Beam,particle=proton,energy=NRJ,sequence=lhcb2,bv=-1;
+call,file="db5/opt_inj_colltunes.madx";
+call,file="db5/opt_inj.madx";
+
+NRJ=6500;
+Beam,particle=proton,energy=NRJ,sequence=lhcb1,bv= 1;
+Beam,particle=proton,energy=NRJ,sequence=lhcb2,bv=-1;
+call,file="db5/opt_600_10000_600_3000.madx";
+exec,check_ip(b1); exec,check_ip(b2);
+
+on_x1=-0;on_sep1= 0;on_o1= 0;on_a1= 0;
+on_x2= 0;on_sep2= 0;on_o2= 0;on_a2= 0;
+on_x5= 0;on_sep5= 0;on_o5= 0;on_a5= 0;
+on_x8=-0;on_sep8=-0;on_o8= 0;on_a8= 0;
+on_alice:=0/nrj; on_lhcb:=-0/nrj;
+exec,check_ip(b1); exec,check_ip(b2);
+
+
+use,sequence=lhcb1;
+twiss,  sequence=lhcb1, file=twiss_lhcb1_mid_thin.tfs;
+
+betxTCP=table(twiss,TCP.D6L7.B1,betx);
+alfxTCP=table(twiss,TCP.D6L7.B1,alfx);
+betyTCP=table(twiss,TCP.D6L7.B1,bety);
+alfyTCP=table(twiss,TCP.D6L7.B1,alfy);
+
+seqedit, sequence=lhcb1; flatten;cycle, start=TCP.D6L7.B1;  endedit;
+use,  period=lhcb1;
+
+on_x8=-1; on_lhcb=0;
+twiss,  betx=betxTCP, bety=betyTCP,  alfx=alfxTCP ,alfy=alfyTCP, dx=0, dy=0, dpx=0,dpy=0, sequence=lhcb1, file=twiss_opt_mid_b1_study.dat, save;
+value,table(twiss,IP8,px);
+
+
+call,file="db5/toolkit/slice.madx";
+call,file="db5/opt_600_10000_600_3000_thin.madx";
+on_x1=-0;on_sep1= 0;on_o1= 0;on_a1= 0;
+on_x2= 0;on_sep2= 0;on_o2= 0;on_a2= 0;
+on_x5= 0;on_sep5= 0;on_o5= 0;on_a5= 0;
+on_x8=-1;on_sep8=-1;on_o8= 0;on_a8= 0;
+on_alice:=0/nrj; on_lhcb:=-0/nrj;
+exec,check_ip(b1); exec,check_ip(b2);
+
+
+exec,check_ip(b1);
+
+
+
+

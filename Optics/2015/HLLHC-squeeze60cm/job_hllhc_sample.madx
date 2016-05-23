@@ -1,0 +1,43 @@
+option, warn,info;
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/HLLHCV1.0 slhc";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/V6.503 db5";
+option,-echo,-info,-warn;
+
+call,file="slhc/toolkit/macro.madx";
+
+Option, -echo,-warn,-info;
+REAL CONST l.TAN   = 3.7  ;REAL CONST l.TANAL = l.TAN;
+REAL CONST l.TANAR = l.TAN;REAL CONST l.TANC  = l.TAN;
+REAL CONST l.TCT   = 1.0;REAL CONST l.TCTH  = l.TCT;REAL CONST l.TCTVA = l.TCT;
+call,file="db5/V6.5.seq";
+call,   file="db5/aperture/aperture.b1.madx";
+call,   file="db5/aperture/aperture.b2.madx";
+call,   file="db5/aperture/aper_tol.b1.madx";
+call,   file="db5/aperture/aper_tol.b2.madx";
+Option, -echo,warn,-info,no_fatal_stop;
+
+call,file="slhc/hllhc_sequence.madx";
+bs_type=4; ap_mqx=150;
+
+call,   file="slhc/aperture/aperture_upgrade_IT.madx";
+call,   file="slhc/aperture/aperture_upgrade_MS.madx";
+
+call,file="slhc/opt_presqueeze600_thin.madx";
+exec,crossing_disable;
+exec,mk_beam(7000); exec,check_ip(b1); exec,check_ip(b2);
+
+use, period=lhcb2;
+use, sequence=lhcb2;
+
+select, flag=twiss, clear;
+select,flag=twiss, column=name,keyword,s,l,betx,bety,x,px,y,py,mux,muy;
+twiss, file=twiss.hllhc.b2.coll7TeV_squeeze60cm.thick;
+
+use, period=lhcb1;
+use, sequence=lhcb1;
+
+select, flag=twiss, clear;
+select,flag=twiss, column=name,keyword,s,l,betx,bety,x,px,y,py,mux,muy;
+twiss, file=twiss.hllhc.b1.coll7TeV_squeeze60cm.thick;
+
+

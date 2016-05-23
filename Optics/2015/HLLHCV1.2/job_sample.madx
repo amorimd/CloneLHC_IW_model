@@ -1,0 +1,75 @@
+option, warn,info;
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/HLLHCV1.2 slhc";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/V6.503 db5";
+
+
+mylhcbeam=1; ! For Beam 1
+
+is_thin=0; ! For thick optics
+!is_thin=1; ! For thin optics
+
+
+Option, -echo,-warn,-info;
+call,file="slhc/toolkit/macro.madx";
+if (mylhcbeam<3 && is_thin==0){ call,file="slhc/hllhc.seq";};
+if (mylhcbeam<3 && is_thin==1){ call,file="slhc/hllhc_thin.seq";};
+Option, -echo,-warn,-info;
+
+
+if (is_thin==0){ call,file="slhc/squeeze/opt_round_150_150_150_150.madx"; };
+if (is_thin==1){ call,file="slhc/opt_round_thin.madx"; };
+
+exec,mk_beam(7000);
+if (mylhcbeam==1){ exec,check_ip(b1); survey,file="survey_lhcb1.tfs";};
+if (mylhcbeam==2){ exec,check_ip(b2); survey,file="survey_lhcb2.tfs";};
+
+use, period=lhcb1;
+use, sequence=lhcb1;
+
+!qx0 =64.31;qy0 =59.32;
+!match;
+!global, q1=qx0, q2=qy0;
+!vary,   name=kqtf, step=1.0E-7 ;
+!vary,   name=kqtd, step=1.0E-7 ;
+!lmdif,  calls=500, tolerance=1.0E-21;
+!endmatch;
+
+select, flag=twiss, clear;
+select,flag=twiss, column=name,keyword,s,l,betx,bety,x,px,y,py,mux,muy;
+twiss, file=twiss.hllhc.b1.coll7TeV_round.thick;
+
+mylhcbeam=2; ! For Beam 2
+
+is_thin=0; ! For thick optics
+!is_thin=1; ! For thin optics
+
+
+Option, -echo,-warn,-info;
+call,file="slhc/toolkit/macro.madx";
+if (mylhcbeam<3 && is_thin==0){ call,file="slhc/hllhc.seq";};
+if (mylhcbeam<3 && is_thin==1){ call,file="slhc/hllhc_thin.seq";};
+Option, -echo,-warn,-info;
+
+
+if (is_thin==0){ call,file="slhc/opt_round.madx"; };
+if (is_thin==1){ call,file="slhc/opt_round_thin.madx"; };
+
+exec,mk_beam(7000);
+if (mylhcbeam==1){ exec,check_ip(b1); survey,file="survey_lhcb1.tfs";};
+if (mylhcbeam==2){ exec,check_ip(b2); survey,file="survey_lhcb2.tfs";};
+
+use, period=lhcb2;
+use, sequence=lhcb2;
+
+!qx0 =64.31;qy0 =59.32;
+!match;
+!global, q1=qx0, q2=qy0;
+!vary,   name=kqtf, step=1.0E-7 ;
+!vary,   name=kqtd, step=1.0E-7 ;
+!lmdif,  calls=500, tolerance=1.0E-21;
+!endmatch;
+
+select, flag=twiss, clear;
+select,flag=twiss, column=name,keyword,s,l,betx,bety,x,px,y,py,mux,muy;
+twiss, file=twiss.hllhc.b2.coll7TeV_round.thick;
+
