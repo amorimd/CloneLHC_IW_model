@@ -1,0 +1,3 @@
+Name	Material	Thickness[m]	Angle[rad]	Halfgap[m]	Length[m]	Betax[m]	Betay[m]	Ageing_factor
+TCSG.5L3.B1	CFC	2.50E-002	0	0.0046909827	1	54.3154276	299.4063453	4.0
+TCSG.4R3.B1	CFC	2.50E-002	0	0.0023102803	1	26.35781537	393.6850067	4.0

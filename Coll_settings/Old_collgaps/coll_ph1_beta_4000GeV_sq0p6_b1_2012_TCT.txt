@@ -1,0 +1,2 @@
+name	Material	Angle[rad]	halfgap[m]	Length[m]	betax[m]	betay[m]
+TCTVA.4L2.B1	W	1.5708	0.00524518780672	1	221.1225252	235.668053

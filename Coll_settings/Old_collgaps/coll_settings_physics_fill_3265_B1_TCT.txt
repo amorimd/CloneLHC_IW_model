@@ -1,0 +1,2 @@
+name	halfgap[m]	nsigma
+TCTVA.4L2.B1 	0.00526785110574 	11.9760809732
