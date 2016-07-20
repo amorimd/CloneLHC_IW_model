@@ -28,7 +28,6 @@ from LHC_param import *
 from LHC_imp import *
 from LHC_coll_imp import *
 
-
 if __name__ == "__main__":
 
     # beam parameters
@@ -36,10 +35,10 @@ if __name__ == "__main__":
 
     # machine parameters
     machine2save='LHC'; 
-    beam='1';
+    beam="1";
 
     # subdirectory (inside DELPHI_results/[machine2save]) where to put the results
-    RunDir='RunII/';
+    RunDir='TCSG6.5s_MD/';
     ResultDir='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
     ResultDir2012='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
     os.system("mkdir -p "+ResultDir);
@@ -53,13 +52,13 @@ if __name__ == "__main__":
     wake_calc=False; # True -> compute wake as well (otherwise only imp.)
 
 
-    kmax=5; # number of converged eigenvalues (kmax most unstable ones are converged)
+    kmax=1; # number of converged eigenvalues (kmax most unstable ones are converged)
     kmaxplot=20; # number of kept and plotted eigenvalues (in TMCI plot)
     col=['b','r','g','m','k','c','y','b--','r--','g--','m--','k--','c--','y--']; # colors
     linetype=['-','--',':'];
 
     # scan definition
-    scenarioscan=np.array(['LHC_ft_6.5TeV_B1_2016']) # name in Coll_settings without ".txt"
+    scenarioscan=np.array(['LHC_ft_6.5TeV_B'+(beam)+'_2016','LHC_ft_6.5TeV_B'+(beam)+'_2016_TCSG-6.5sigma_MD_20160423_open','LHC_ft_6.5TeV_B'+(beam)+'_2016_TCSG-6.5sigma_MD_20160423_closed']) # name in Coll_settings without ".txt"
 
     print scenarioscan
     dircollscan=scenarioscan; # name of the subdirectory created in ImpedanceWake2D folder
@@ -90,11 +89,11 @@ if __name__ == "__main__":
     
     # setting the scans
     planes=['x','y'];
-    Qpscan=np.arange(-5,6,1);
+    Qpscan=np.arange(-20,21,1);
     dampscan=np.array([0, 0.005, 0.01, 0.02]); # damper gain scan
-    Nbscan=np.arange(2.5e10, 7.5e11, 2.5e10)
+    Nbscan=np.array([1.2e11])
     Mscan=np.array([1]); # scan on number of bunches
-    imp_fact=3. #impedance factor
+    imp_fact=1. #impedance factor
 
 
     estimation_scale_2012=0; # to deduce intensity vs emittance curves based on 2012 instabilites
@@ -186,7 +185,7 @@ if __name__ == "__main__":
 		        machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
 
 		    # DELPHI run
-		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV_Z'+str(imp_fact),queue='1nw',dire=root_result+'/',flagQpscan_outside=True);
+		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV_Z'+str(imp_fact),queue='2nw',dire=root_result+'/',flagQpscan_outside=True);
 
 
 	    # now the most unstable modes
@@ -203,9 +202,9 @@ if __name__ == "__main__":
 					# output files name for data vs Qp
 					Estr=float_to_str(round(Escan[subscan[iscenario]]/1e9))+'GeV';
 					root_result=ResultDir+scenarioscan[subscan[iscenario]]+'/';
-					fileoutdataQp=root_result+'/data_vs_Qp_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane;
-					fileoutdataQpm0=root_result+'/data_vs_Qp_m0_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane;
-					fileoutdata_all=root_result+'/data_vs_Qp_all_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane;
+					fileoutdataQp=root_result+'/data_vs_Qp_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane+'_Z'+str(imp_fact);
+					fileoutdataQpm0=root_result+'/data_vs_Qp_m0_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane+'_Z'+str(imp_fact);
+					fileoutdata_all=root_result+'/data_vs_Qp_all_'+machine_str+'_'+Estr+scenario+'_'+str(M)+'b_d'+float_to_str(damp)+'_Nb'+float_to_str(Nb/1.e11)+'e11_converged'+strnorm[flagnorm]+'_'+plane+'_Z'+str(imp_fact);
 
 					ts=getattr(tuneshiftQp[iscenario,iplane,iM,:,idamp,np.where(Nbscan==Nb),0,0,0],r);
 					data=np.hstack((Qpscan.reshape((-1,1)),ts.reshape((-1,1))));
@@ -304,6 +303,7 @@ if estimation_scale_2012==1:
     comment_coll_machine=scenario2012;
 
     root_result2012=ResultDir2012+scenario2012+'/';
+    os.system("mkdir -p "+root_result2012);
 
     # fixed parameters
     machine_str,E_2012,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h,M,en=LHC_param(E0,E=en2012*1e12,scenario='Nominal LHC');
