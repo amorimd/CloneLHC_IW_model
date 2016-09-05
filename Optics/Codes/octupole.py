@@ -9,7 +9,6 @@ def detuning_coeff(opticsDir):
 
     ### compute optics at octupoles
 
-    opticsDir =  '/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/HLLHC_IW_model/Optics/2016/HLLHC_48cm/'
     filename = opticsDir+'/twiss_lhcb1.tfs'
 
     t=pyopt.optics.open(filename);
@@ -64,7 +63,6 @@ def qsec_coeff(opticsDir):
 
     ### compute optics at octupoles
 
-    opticsDir =  '/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/HLLHC_IW_model/Optics/2016/HLLHC_48cm/'
     filename = opticsDir+'/twiss_lhcb1.tfs'
 
     t=pyopt.optics.open(filename);
