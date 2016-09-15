@@ -1,0 +1,12 @@
+!
+! IP1 phase adjusted
+!
+
+call, file="/afs/cern.ch/eng/lhc/optics/runII/2016/opt_inj.madx";
+call, file="/afs/cern.ch/user/h/hbu/public/2016/IP1_2500.str";
+call, file="/afs/cern.ch/user/h/hbu/public/2016/IP5_2500.str";
+call, file="/afs/cern.ch/user/h/hbu/public/2016/tune_2500.str";
+
+
+call, file="/afs/cern.ch/user/h/hbu/public/2016/IP1_2500_4.str";
+
