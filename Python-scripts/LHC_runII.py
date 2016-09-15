@@ -27,7 +27,7 @@ from DELPHI import *
 from LHC_param import *
 from LHC_imp import *
 from LHC_coll_imp import *
-
+import pickle as pkl
 if __name__ == "__main__":
 
     # beam parameters
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     beam="1";
 
     # subdirectory (inside DELPHI_results/[machine2save]) where to put the results
-    RunDir='TCSG6.5s_MD/';
+    RunDir='RunII/';
     ResultDir='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
     ResultDir2012='/afs/cern.ch/work/n/nbiancac/scratch0/DELPHI_results/'+machine2save+'/'+RunDir;
     os.system("mkdir -p "+ResultDir);
@@ -58,7 +58,8 @@ if __name__ == "__main__":
     linetype=['-','--',':'];
 
     # scan definition
-    scenarioscan=np.array(['LHC_ft_6.5TeV_B'+(beam)+'_2016','LHC_ft_6.5TeV_B'+(beam)+'_2016_TCSG-6.5sigma_MD_20160423_open','LHC_ft_6.5TeV_B'+(beam)+'_2016_TCSG-6.5sigma_MD_20160423_closed']) # name in Coll_settings without ".txt"
+    # scenarioscan=np.array([('LHC_ft_6.5TeV_B1_2016_TCP7_5.5sig_TCSG7_%.1fsig')%(sig) for sig in np.array([6,7,8,9,10])]) # name in Coll_settings without ".txt"
+    scenarioscan = np.array(['LHC_inj_450GeV_B1'])
 
     print scenarioscan
     dircollscan=scenarioscan; # name of the subdirectory created in ImpedanceWake2D folder
@@ -77,10 +78,13 @@ if __name__ == "__main__":
     optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2015/LHC-ft'
     LHC2015_ft=optics_dir+'/twiss.lhc.b'+beam+'.ft6.5tev.thick_beta_elements.dat';
     
-    squeezescan=np.array([LHC2015_ft for ii in scenarioscan])
+    optics_dir='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Optics/2015/LHC-injection'
+    LHC2015_inj=optics_dir+'/twiss.lhc.b'+beam+'.inj450gev.thick_beta_elements.dat';
+    
+    squeezescan=np.array([LHC2015_inj for ii in scenarioscan])
 
     model=['Nominal LHC'  for ii in scenarioscan]; # case in LHC_param
-    Escan=np.array([6500e9 for ii in scenarioscan]); # Energy
+    Escan=np.array([450e9 for ii in scenarioscan]); # Energy
     #subscan=np.array([0])
     subscan=np.arange(0,len(Escan))
     print subscan
@@ -116,6 +120,11 @@ if __name__ == "__main__":
 	if machine2save=='LHC':
 		machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h, M,en=LHC_param(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
         	machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
+		machine.opticsDir = squeezescan[subscan[iscenario]]
+		machine.model = model[subscan[iscenario]]
+		fid = open(root_result+'/machine_configuration.pkl','w')
+		pkl.dump(machine,fid)
+		fid.close()
 	
 	g,a,b=longdistribution_decomp(taub,typelong="Gaussian");
         avbetax=R/Qx;avbetay=R/Qy; # average beta functions used
@@ -183,6 +192,10 @@ if __name__ == "__main__":
 		    if model[subscan[iscenario]]=='LHC':
 		    	machine_str,E,gamma,sigmaz,taub,R,Qx,Qxfrac,Qy,Qyfrac,Qs,eta,f0,omega0,omegas,dphase,Estr,V,h,M,en=LHC_param(E0,E=Escan[subscan[iscenario]]);
 		        machine=LHC(E0,E=Escan[subscan[iscenario]],scenario=model[subscan[iscenario]])
+			with open(root_result+'/'+scenario+'_machine.pkl', 'w') as f:
+				pkl.dump(machine, f)
+			f.close()
+
 
 		    # DELPHI run
 		    tuneshiftQp[iscenario,:,:,:,:,:,:,:,:],tuneshiftm0Qp[iscenario,:,:,:,:,:,:,:]=DELPHI_wrapper(imp_mod_list[iscenario],Mscan,Qpscan,dampscan,Nbscan,[omegas],[dphase],omega0,Qx,Qy,gamma,eta,a,b,taub,g,planes,nevery=nevery,particle='proton',flagnorm=0,flagdamperimp=0,d=None,freqd=None,kmax=kmax,kmaxplot=kmaxplot,crit=5.e-2,abseps=1e-4,flagm0=True,lxplusbatch=lxplusbatchDEL,comment=machine_str+scenario+'_'+float_to_str(round(E/1e9))+'GeV_Z'+str(imp_fact),queue='2nw',dire=root_result+'/',flagQpscan_outside=True);
@@ -218,6 +231,8 @@ if __name__ == "__main__":
 					data=np.hstack((Qpscan.reshape((-1,1)),all_unstable_modes.reshape((-1,kmaxplot))));
 					write_ncol_file(fileoutdata_all+'_'+r+'.dat',data,header="Qp\t"+strpart[ir]+"_tuneshift")
 
+
+					
  
 
 
