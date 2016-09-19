@@ -31,8 +31,8 @@ def detuning_coeff(opticsDir):
     betax = t.betx[t.pattern('MO')]
     betay = t.bety[t.pattern('MO')]
 
-    indF = np.where(betax > (betax.max() * 0.8)) # focuses in X plane means high betax
-    indD = np.where(betay > (betay.max() * 0.8)) # defocuses in X plane means high betay
+    indF = np.where(betax > (betax.max() * 0.5)) # focuses in X plane means high betax
+    indD = np.where(betay > (betay.max() * 0.5)) # defocuses in X plane means high betay
 
     # not: additional minus sign for the defocusing octupoles because O3D=-O3F for
     # the same current in foc. and defoc. octupoles
