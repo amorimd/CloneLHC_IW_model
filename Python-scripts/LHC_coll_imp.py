@@ -20,6 +20,199 @@ from string_lib import *
 from particle_param import *
 from Impedance import *
 
+def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc=False,ftypescan=2,nflog=100,zpar=z_param(),namesref=None,BPM=False,flag_wakefiles=False,fcutoffBB=5e9,lxplusbatch=None,comment='',dire='',assymetry_factor_TCL6=1.,root_result=path_here+'../../../DELPHI_results/LHC'):
+
+    ''' creates an impedance or wake model for all collimators.
+    E is the energy in eV,
+    avbetax and avbetay the average beta functions used for the weighting,
+    param_filename is the file with all parameters and half-gaps and betas,
+    wake_calc selects the wake computation if True.
+    nflog is the number of frequencies per decade,
+    ftypescan the type of frequency scan (0,1 or 2: logarithmic only,
+    linear only or logarithmic with refinement around high-frequency resonance(s) ).
+    zpar gives the distance scan for the wake.
+    namesref are the coll. names (from param_filename) to select (if None take all),
+    BPM: geometry contains a BPM cavity if BPM is True, otherwise old LHC coll. geometry
+    flag_wakefiles: True to use GdFidl wake potential files instead of Stupakov
+    fcutoffBB: cutoff frequency for broad-band model of geometric impedance
+    of collimators
+    lxplusbatch: if None, no use of lxplus batch system
+                   if 'launch' -> launch calculation on lxplus on queue 'queue'
+                   if 'retrieve' -> retrieve outputs
+    dire contains the directory name where to put the outputs (default='./'=directory of IW2D)
+    assymetry_factor_TCL6: assymetry factor between the distance beam-jaw
+    in the case of the TCL6 (1 means that jaws are symmetric).
+    In this version, the parameter file can contain several material rows
+    (with the associated thickness columns) and the geometric impedance is
+    taken into account'''
+
+    e,m0,c,E0=proton_param();
+    gamma=E*e/E0;
+
+    header,cols=read_multiform_file(param_filename,'\t',1)
+    #print header
+    ind,namesref=select_col(header,cols,'Name');
+    if ind==-1: sys.exit("No Names");
+    ind,material=select_col(header,cols,'Material');
+    if ind==-1: sys.exit("No Materials");
+    ind,thick=select_col(header,cols,'Thickness[m]');
+    if ind==-1: sys.exit("No Thickness");
+    ind,angle=select_col(header,cols,'Angle[rad]');
+    if ind==-1: sys.exit("No Angles");
+    ind,length=select_col(header,cols,'Length[m]');
+    if ind==-1: sys.exit("No Length");
+    ind,halfgap=select_col(header,cols,'Halfgap[m]');
+    if ind==-1: sys.exit("No Gaps");
+    ind,betax=select_col(header,cols,'Betax[m]');
+    if ind==-1: sys.exit("No Betax");
+    ind,betay=select_col(header,cols,'Betay[m]');
+    if ind==-1: sys.exit("No Betay");
+    ind,ageing_factor=select_col(header,cols,'Ageing_factor');
+    if ind==-1: ageing_factor=[]; print "No ageing considered."# setting default no ageing on collimator materials.
+
+
+
+    # read files
+
+    name_uniq=[];
+    [name_uniq.append(n) for n in namesref if n not in name_uniq];
+    # main loop to construct model
+    imp_mod_RW=[];wake_mod_RW=[];imp_mod_geom=[];wake_mod_geom=[];
+    for iname,name in enumerate(name_uniq):
+        fminrefine=1.e11;fmaxrefine=5.e12;nrefine=5000
+        ind=[];
+        materials=[];
+        thicks=[];
+        betx=[];
+        bety=[];
+        age=[];
+
+        [ind.append(i) for i,n in enumerate(namesref) if n==name];
+        materials=[material[i] for i in ind];
+        thicks=[thick[i] for i in ind];
+        betx=[betax[i] for i in ind];
+        bety=[betay[i] for i in ind];
+        if ageing_factor: age=[ageing_factor[i] for i in ind];
+
+        # reorder materials and thicknesses
+        assymetry_factor=0
+        if (assymetry_factor != 1.): comment_assym='assym'+float_to_str(assymetry_factor);
+        
+        imp_RW,wake_RW,imp_geom,wake_geom=LHC_single_RP_iw_model_with_geom(name,materials,float(halfgap[ind[0]]),float(angle[ind[0]]),gamma,float(length[ind[0]]),thickness=thicks,ageing_factor=age,wake_calc=wake_calc,fpar=freq_param(ftypescan=ftypescan,nflog=nflog,fminrefine=fminrefine,fmaxrefine=fmaxrefine,nrefine=nrefine),zpar=zpar,BPM=BPM,flag_wakefiles=flag_wakefiles,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment='_'+materials[0]+'_'+comment_assym+'_'+comment,dire=dire,assymetry_factor=assymetry_factor,param_filename=param_filename);
+	
+	imp_RW_weighted=[]	
+	wake_RW_weighted=[];
+	imp_geom_weighted=[]
+	wake_geom_weighted=[];
+
+	add_impedance_wake(imp_RW_weighted,imp_RW,float(betx[0])/avbetax,float(bety[0])/avbetay);
+       	add_impedance_wake(imp_geom_weighted,imp_geom,float(betx[0])/avbetax,float(bety[0])/avbetay);
+	add_impedance_wake(wake_RW_weighted,wake_RW,float(betx[0])/avbetax,float(bety[0])/avbetay);
+       	add_impedance_wake(wake_geom_weighted,wake_geom,float(betx[0])/avbetax,float(bety[0])/avbetay);
+
+	
+	write_imp_wake_mod(imp_RW_weighted,"_"+name+'_RW',listcomp=['Zlong','Zxdip','Zydip','Zxquad','Zyquad','Wlong','Wxdip','Wydip','Wxquad','Wyquad'],dire=root_result+'/');
+
+	write_imp_wake_mod(imp_geom_weighted,"_"+name+'_Geom',listcomp=['Zlong','Zxdip','Zydip','Zxquad','Zyquad','Wlong','Wxdip','Wydip','Wxquad','Wyquad'],dire=root_result+'/');
+	
+	add_impedance_wake(imp_mod_RW,imp_RW_weighted,1,1);
+        add_impedance_wake(wake_mod_RW,wake_RW_weighted,1,1);
+        add_impedance_wake(imp_mod_geom,imp_geom_weighted,1,1);
+        add_impedance_wake(wake_mod_geom,wake_geom_weighted,1,1);
+
+    return imp_mod_RW,wake_mod_RW,imp_mod_geom,wake_mod_geom;
+
+
+def LHC_single_RP_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
+        thickness=[],ageing_factor=[],wake_calc=False,fpar=freq_param(),zpar=z_param(),BPM=False,
+        flag_wakefiles=False,fcutoffBB=5e9,lxplusbatch=None,comment='',dire='',queue=None,
+        assymetry_factor=1.,param_filename=''):
+
+    ''' construct impedance/wake model (flat chamber) for an LHC collimator
+    with a skew angle (as defined in N. Mounet PhD, p. 56)
+    name is the name of the collimator, materials its materials
+    (list of names or layer objects), angle in rad, halfgap in m,
+    layers thickness in m except the last (and main) jaw material (e.g. CFC, hBN, etc.)
+    which is hard-coded.
+    geometry contains a BPM cavity if BPM is True, otherwise old LHC coll. geometry
+    wake_calc: flag for wake calculation
+    This includes geometric impedance from Stupakov's analytical formula
+    (flat tapers), thanks to INFN computations (M. Zobov, O. Frasciello)
+
+    last layer is always stainless steel 304L
+
+    fpar and zpar select the frequencies and distances (for the wake) scans
+    (objects of the classes freq_param and z_param).
+
+    flag_wakefiles: True to use GdFidl wake potential files instead of Stupakov
+
+    fcutoffBB: cutoff frequency for broad-band model of geometric impedance
+    of collimators
+
+    lxplusbatch: if None, no use of lxplus batch system
+                   if 'launch' -> launch calculation on lxplus on queue 'queue'
+                   if 'retrieve' -> retrieve outputs
+    comment is added to the name for IW2D output files
+    dire contains the directory name where to put the outputs (default='./'=directory of IW2D)
+    if queue is not None, it is the lxbatch queue where to launch the calculation.
+    if assymetry factor is different from 1, uppper & lower jaws are not at the same
+    distance from the beam, and assymetry_factor represents the factor applied to
+    the distance to the upper jaw to get that of the lower jaw (can be zero - no lower
+    jaw, as in TCDQ)
+    param_filename: collimator settings name to distinguish 2012 from postLS1 cases.
+    '''
+
+
+    materials=create_list(materials,n=1);
+
+    queue= '2nd';
+    # material names convenions
+    freqlin=1.e11;
+    print materials, queue, name, thickness;
+    Bfield=0; # no magnetoresistance effects in collimators
+    # construct layers list
+    layers=construct_layers(materials,thickness=thickness,Bfield=Bfield,Age=ageing_factor);
+    # add infinite stainless-steel in the end
+    layers.append(ss304L_layer());
+
+    if assymetry_factor!=1:
+        # assymetric jaws
+        b=[halfgap,halfgap*assymetry_factor];
+        print 'asymmetric jaw'
+        if assymetry_factor>0:
+            # lower layers assumed identical to the upper ones
+            layerslow=deepcopy(layers)
+            layers.extend(layerslow);
+
+
+    # construct input file for resistive-wall computation
+    iw_input=impedance_wake_input(gamma=gamma,length=length,b=b,
+        layers=layers,fpar=fpar,zpar=zpar,freqlinbisect=freqlin,geometry='flat',comment='_'+name+comment);
+
+    imp_mod,wake_mod=imp_model_from_IW2D(iw_input,wake_calc=wake_calc,flagrm=True,lxplusbatch=lxplusbatch,queue=queue,dire=dire);
+
+    imp_mod_RW=rotate_imp_wake(imp_mod,np.pi/2.-angle);
+    wake_mod_RW=rotate_imp_wake(wake_mod,np.pi/2.-angle);
+
+    # compute geometric impedance
+    R= 150e3/0.1e-3*halfgap # linear w.r.t. value caluculated at 0.1mm [BS from CST]
+    fr = 50e9
+    Q = 1.
+
+    if wake_calc:
+        imp_modg,wake_modg=imp_model_resonator(R,fr,Q,wake_calc=wake_calc,fpar=fpar,
+                zpar=zpar,listcomp=['Zlong', 'Zxdip', 'Zydip', 'Zxquad', 'Zyquad']);
+        
+    else:
+        imp_modg,wake_modg=imp_model_resonator(R,fr,Q,wake_calc=wake_calc,fpar=fpar,
+                zpar=zpar,listcomp=['Zlong', 'Zxdip', 'Zydip', 'Zxquad', 'Zyquad']);
+
+    imp_mod_geom=rotate_imp_wake(imp_modg,np.pi/2.-angle);
+    wake_mod_geom=rotate_imp_wake(wake_modg,np.pi/2.-angle);
+
+    return imp_mod_RW,wake_mod_RW,imp_mod_geom,wake_mod_geom;
+
+
 
 def LHC_singlecoll_iw_model(name,materials,halfgap,angle,gamma,length,thickness=[],rhoDC=[],
         wake_calc=False,coatingmat=None,coatingthickness=0,assymetry_factor=1.,fpar=freq_param(),zpar=z_param(),
@@ -353,7 +546,7 @@ def LHC_singlecoll_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
         # add low frequency mode in TCTs and TCSG in IP6
         print name+' adding peak'
         fpar=freq_param(ftypescan=1,fmin=0.5e8,fmax=3e8,fsamplin=1e6,fadded=[1e-2,0.1,1,1e15]);
-        TCTPmodeFileName='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/PYTHON_codes_and_scripts/LHC_impedance_and_scripts/Coll_settings/TCTPmode_Vs_fgap_BS.txt';
+        TCTPmodeFileName='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Coll_settings/TCTPmode_Vs_fgap_BS.txt';
 
         fg,r1,r2,q1,q2,f1,f2=np.loadtxt(TCTPmodeFileName, delimiter='\t',skiprows=1,unpack=True);
         hg=fg/2;
