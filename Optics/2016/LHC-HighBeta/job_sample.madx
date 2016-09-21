@@ -1,9 +1,9 @@
 option, warn,info;
 system,"rm -rf temp"; system,"mkdir temp";
-system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/opt_med/ db5";
+system,"ln -fns /afs/cern.ch/eng/lhc/optics/runII/2016/ db5";
 
 Option, -echo,-warn,-info;
-call,file="db5/V6.5.seq";
+call,file="db5/lhc_as-built.seq";
 Option, -echo,warn,-info;
 
 call,file="db5/toolkit/macro.madx";
