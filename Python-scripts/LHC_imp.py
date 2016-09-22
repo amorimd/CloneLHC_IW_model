@@ -725,7 +725,7 @@ def LHC_imp_model_v1(E,avbetax,avbetay,param_filename_coll,settings_filename_col
     
 
 def LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_coll,
-	beta_filename_coll=None,TDIcoating='preLS1',dire=path_here+"LHC_elements/",commentcoll='',direcoll='Coll_v2/',lxplusbatch=None,
+	beta_filename_coll=None, RP_settings = '', TDIcoating='preLS1',dire=path_here+"LHC_elements/",commentcoll='',direcoll='Coll_v2/',lxplusbatch=None,
 	BPM=False,beam='1',squeeze='0p6m_3m_0p6m_3m',wake_calc=False,ftypescan=0,nflog=100,zpar=z_param(),
 	fcutoffBB=50e9,flagplot=False,root_result=path_here+'../../../DELPHI_results/LHC',commentsave='',
 	assymetry_factor_TCL6=1.):
@@ -768,7 +768,9 @@ def LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_col
     if beta_filename_coll==None: beta_filename_coll=param_filename_coll;
     
     imp_mod_coll_RW,wake_mod_coll_RW,imp_mod_coll_geom,wake_mod_coll_geom=LHC_manycoll_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename_coll,wake_calc=wake_calc,ftypescan=ftypescan,nflog=nflog,zpar=zpar,namesref=None,BPM=BPM,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment=commentcoll,dire=direcoll,assymetry_factor_TCL6=assymetry_factor_TCL6,root_result=root_result);
-    
+   
+    imp_mod_RP_RW,wake_mod_RP_RW,imp_mod_RP_geom,wake_mod_RP_geom=LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,RP_settings,wake_calc=wake_calc,ftypescan=ftypescan,nflog=nflog,zpar=zpar,namesref=None,BPM=BPM,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment=commentcoll,dire=direcoll,assymetry_factor_TCL6=assymetry_factor_TCL6,root_result=root_result);
+     
     # beta functions for all the rest
     beta_filename_rest=squeeze;
 
@@ -834,11 +836,17 @@ def LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_col
 	    imp_mod=[];wake_mod=[];
 	    add_impedance_wake(imp_mod,imp_mod_coll_RW,1,1);
 	    add_impedance_wake(wake_mod,wake_mod_coll_RW,1,1);
-	    
+	   
+            add_impedance_wake(imp_mod,imp_mod_RP_RW,1,1);
+	    add_impedance_wake(wake_mod,wake_mod_RP_RW,1,1);
+	     
 	    add_impedance_wake(imp_mod,imp_mod_coll_geom,1,1);
 	    add_impedance_wake(wake_mod,wake_mod_coll_geom,1,1);
 
-	    add_impedance_wake(imp_mod,imp_mod_RW_BS,1,1);
+	    add_impedance_wake(imp_mod,imp_mod_RP_geom,1,1);
+	    add_impedance_wake(wake_mod,wake_mod_RP_geom,1,1);
+
+            add_impedance_wake(imp_mod,imp_mod_RW_BS,1,1);
 	    add_impedance_wake(wake_mod,wake_mod_RW_BS,1,1);
 	    
 	    add_impedance_wake(imp_mod,imp_mod_RW_rest,1,1);
@@ -860,32 +868,22 @@ def LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_col
 	    add_impedance_wake(wake_mod,wake_mod_BB,1,1);
         
     if lxplusbatch.startswith('retrieve') and flagplot:
-    	imp_mod_list=[imp_mod,imp_mod_coll_RW,imp_mod_coll_geom,imp_mod_RW_BS,
+    	imp_mod_list=[imp_mod,imp_mod_coll_RW,imp_mod_coll_geom,imp_mod_RP_RW,imp_mod_RP_geom,imp_mod_RW_BS,
 		imp_mod_RW_rest,imp_mod_triplets_BB_taper,
 		imp_mod_triplets_BB_BPMs,imp_mod_HOMs,imp_mod_holes,imp_mod_BB];
 
-	leg=['Total','RW-coll','Geom-coll','RW-beam-screen',
+	leg=['Total','RW-coll','Geom-coll','RW-RP','Geom-RP','RW-beam-screen',
 		'RW-warmpipe','Tapers-triplets','BPM-triplets',
 		'RF-CMS-ALICE-LHCb','Pumping-holes','Other-BB'];
 	ind=np.arange(0,len(leg));
 	for ii in ind:
 		write_imp_wake_mod(imp_mod_list[ii],"_"+leg[ii]+'_'+commentsave,listcomp=['Zlong','Zxdip','Zydip','Zxquad','Zyquad','Zxydip','Zyxdip','Zxyquad','Zyxquad','Zxcst','Zycst','Wlong','Wxdip','Wydip','Wxquad','Wyquad','Wxydip','Wyxdip','Wxyquad','Wyxquad','Wxcst','Wycst'],dire=root_result+'/')
-	
-	#plot_compare_imp_model(imp_mod_list,leg,listcomp=['Zlong','Zxdip','Zydip','Zxquad','Zyquad','Zxydip','Zxyquad'],saveimp=root_result+'/plot_imp_LHC_v2_'+commentsave+'details', saveratio=root_result+'/plot_imp_ratio_LHC_v2_'+commentsave+'details', xlim=[1e3,5e9],ylim=[1e5,1e10],bounds=[40e6,2e9],legpos=3,plotpercent=True);
-	
-	# plot of the total
-	#plot_compare_imp_model([imp_mod],[''],listcomp=['Zlong','Zxdip','Zydip','Zxquad','Zyquad','Zxydip','Zxyquad','Zxcst','Zycst'], saveimp=root_result+'/plot_imp_LHC_v2_'+commentsave, xlim=[1e3,5e9],ylim=[1e5,1e10],bounds=[40e6,2e9],legpos=3);
-
 	if wake_calc:
 
-    	    wake_mod_list=[wake_mod,wake_mod_coll_RW,wake_mod_coll_geom,wake_mod_RW_BS,
+    	    wake_mod_list=[wake_mod,wake_mod_coll_RW,wake_mod_coll_geom,wake_mod_RP_RW,wake_mod_RP_geom,wake_mod_RW_BS,
 		    wake_mod_RW_rest,wake_mod_triplets_BB_taper,
 		    wake_mod_triplets_BB_BPMs,wake_mod_HOMs,wake_mod_holes,wake_mod_BB];
 
-	    #plot_compare_imp_model(wake_mod_list,leg,listcomp=['Wlong','Wxdip','Wydip','Wxquad','Wyquad','Wxydip','Wxyquad'],saveimp=root_result+'/plot_wake_LHC_v2_'+commentsave+'details',saveratio=root_result+'/plot_wake_ratio_LHC_v2_'+commentsave+'details',xlim=[1e-1,1e6],ylim=[1e12,1e19],yliml=[1e6,1e15],bounds=[40e6,2e9],legpos=3,plotpercent=True);
-
- 	    # plot of the total
-	    #plot_compare_imp_model([wake_mod],[''],listcomp=['Wlong','Wxdip','Wydip','Wxquad','Wyquad','Wxydip','Wxyquad','Wxcst','Wycst'],saveimp=root_result+'/plot_wake_LHC_v2_'+commentsave,xlim=[1e-2,1e6],ylim=[1e10,1e19],yliml=[1e6,1e15],bounds=[40e6,2e9],legpos=3);	
     return imp_mod,wake_mod;
     
 

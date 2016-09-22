@@ -49,7 +49,7 @@ def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc
     e,m0,c,E0=proton_param();
     gamma=E*e/E0;
 
-    header,cols=read_multiform_file(param_filename,'\t',1)
+    header,cols=read_multiform_file(param_filename+'.txt','\t',1)
     #print header
     ind,namesref=select_col(header,cols,'Name');
     if ind==-1: sys.exit("No Names");
@@ -546,7 +546,7 @@ def LHC_singlecoll_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
         # add low frequency mode in TCTs and TCSG in IP6
         print name+' adding peak'
         fpar=freq_param(ftypescan=1,fmin=0.5e8,fmax=3e8,fsamplin=1e6,fadded=[1e-2,0.1,1,1e15]);
-        TCTPmodeFileName='/afs/cern.ch/user/n/nbiancac/ln_work/scratch0/IRIS/LHC_IW_model/Coll_settings/TCTPmode_Vs_fgap_BS.txt';
+        TCTPmodeFileName='/afs/cern.ch/user/d/damorim/work/GitIRIS/LHC_IW_model/Coll_settings/TCTPmode_Vs_fgap_BS.txt';
 
         fg,r1,r2,q1,q2,f1,f2=np.loadtxt(TCTPmodeFileName, delimiter='\t',skiprows=1,unpack=True);
         hg=fg/2;
