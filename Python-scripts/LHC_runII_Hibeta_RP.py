@@ -50,7 +50,7 @@ if __name__ == "__main__":
     flagdamperimp=0; # 1 to use frequency dependent damper gain (provided in Zd,fd)
     strnorm=[''];
     flagnorm=0; # 1 if damper matrix normalized at current chromaticity (instead of at zero chroma)
-    flagplot=True; # to write impedance files by elements
+    flagplot=False#True; # to write impedance files by elements
     nevery=1; # downsampling of the impedance (take less points than in the full model)
     wake_calc=False; # True -> compute wake as well (otherwise only imp.)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     # setting the scans
     planes=['x','y'];
-    Qpscan=np.arange(-4,22,2);
+    Qpscan=np.arange(0,22,2);
     dampscan=np.array([0, 0.005, 0.01, 0.02]); # damper gain scan
     Nbscan=np.array([0.1e11,0.5e11,1.0e11,1.5e11])
     Mscan=np.array([1]); # scan on number of bunches
@@ -191,10 +191,10 @@ if __name__ == "__main__":
 
             if machine2save=='LHC':
                 imp_mod,wake_mod=LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_coll,dire=path_here+"../LHC_elements/",commentcoll=comment_coll_machine,direcoll=dircollscan[subscan[iscenario]]+'/',lxplusbatch=lxplusbatchImp,beam=beam, RP_settings = param_filename_coll_root+RP_scenarioscan[subscan[iscenario]], squeeze=squeezescan[subscan[iscenario]],wake_calc=wake_calc,flagplot=flagplot,root_result=root_result,commentsave=RP_scenarioscan[subscan[iscenario]]);
-
-
+               
         elif (lxplusbatchImp.startswith('restore')):
             print 'Loading from impedance database...'+scenario
+
             imp_mod=[]; wake_mod=[];
 	    suffix='_Allthemachine_'+Estr+'_B'+beam+'_'+scenario+'.dat';
             freq_mod,Z_mod=readZ(root_result+"Zxdip"+suffix);

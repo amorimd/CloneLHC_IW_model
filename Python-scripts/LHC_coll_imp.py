@@ -50,7 +50,7 @@ def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc
     gamma=E*e/E0;
 
     header,cols=read_multiform_file(param_filename+'.txt','\t',1)
-    #print header
+    print param_filename
     ind,namesref=select_col(header,cols,'Name');
     if ind==-1: sys.exit("No Names");
     ind,material=select_col(header,cols,'Material');
@@ -69,6 +69,7 @@ def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc
     if ind==-1: sys.exit("No Betay");
     ind,ageing_factor=select_col(header,cols,'Ageing_factor');
     if ind==-1: ageing_factor=[]; print "No ageing considered."# setting default no ageing on collimator materials.
+    print namesref
 
 
 
@@ -97,7 +98,7 @@ def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc
         # reorder materials and thicknesses
         assymetry_factor=0
         if (assymetry_factor != 1.): comment_assym='assym'+float_to_str(assymetry_factor);
-        
+        print name,halfgap[ind[0]], dire, param_filename, comment, comment_assym 
         imp_RW,wake_RW,imp_geom,wake_geom=LHC_single_RP_iw_model_with_geom(name,materials,float(halfgap[ind[0]]),float(angle[ind[0]]),gamma,float(length[ind[0]]),thickness=thicks,ageing_factor=age,wake_calc=wake_calc,fpar=freq_param(ftypescan=ftypescan,nflog=nflog,fminrefine=fminrefine,fmaxrefine=fmaxrefine,nrefine=nrefine),zpar=zpar,BPM=BPM,flag_wakefiles=flag_wakefiles,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment='_'+materials[0]+'_'+comment_assym+'_'+comment,dire=dire,assymetry_factor=assymetry_factor,param_filename=param_filename);
 	
 	imp_RW_weighted=[]	
@@ -195,7 +196,7 @@ def LHC_single_RP_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
     wake_mod_RW=rotate_imp_wake(wake_mod,np.pi/2.-angle);
 
     # compute geometric impedance
-    R= 150e3/0.1e-3*halfgap # linear w.r.t. value caluculated at 0.1mm [BS from CST]
+    R= 150e3*0.1e-3/halfgap # linear w.r.t. value caluculated at 0.1mm [BS from CST]
     fr = 50e9
     Q = 1.
 

@@ -773,7 +773,7 @@ def LHC_imp_model_v2(E,avbetax,avbetay,param_filename_coll,settings_filename_col
     if RP_settings=='':
         imp_mod_RP_RW=[];wake_mod_RP_RW=[];imp_mod_RP_geom=[];wake_mod_RP_geom=[];
     else:
-        imp_mod_RP_RW,wake_mod_RP_RW,imp_mod_RP_geom,wake_mod_RP_geom=LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,RP_settings,wake_calc=wake_calc,ftypescan=ftypescan,nflog=nflog,zpar=zpar,namesref=None,BPM=BPM,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment=commentcoll,dire=direcoll,assymetry_factor_TCL6=assymetry_factor_TCL6,root_result=root_result);
+        imp_mod_RP_RW,wake_mod_RP_RW,imp_mod_RP_geom,wake_mod_RP_geom=LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,RP_settings,wake_calc=wake_calc,ftypescan=ftypescan,nflog=nflog,zpar=zpar,namesref=None,BPM=BPM,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,comment=commentsave,dire=direcoll,assymetry_factor_TCL6=assymetry_factor_TCL6,root_result=root_result);
      
     # beta functions for all the rest
     beta_filename_rest=squeeze;
