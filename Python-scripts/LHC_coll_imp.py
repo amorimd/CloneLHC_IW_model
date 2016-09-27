@@ -50,7 +50,7 @@ def LHC_many_RP_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc
     gamma=E*e/E0;
 
     header,cols=read_multiform_file(param_filename+'.txt','\t',1)
-    print param_filename
+    
     ind,namesref=select_col(header,cols,'Name');
     if ind==-1: sys.exit("No Names");
     ind,material=select_col(header,cols,'Material');
@@ -495,7 +495,7 @@ def LHC_singlecoll_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
 
 
     materials=create_list(materials,n=1);
-
+    print param_filename
     if (queue==None):
         # find on which queue to launch calculation (case when lxplusbatch=='launch')
         queues=['2nd','2nd','2nd','2nd','2nd','2nd','1nw'];
@@ -547,7 +547,7 @@ def LHC_singlecoll_iw_model_with_geom(name,materials,halfgap,angle,gamma,length,
         # add low frequency mode in TCTs and TCSG in IP6
         print name+' adding peak'
         fpar=freq_param(ftypescan=1,fmin=0.5e8,fmax=3e8,fsamplin=1e6,fadded=[1e-2,0.1,1,1e15]);
-        TCTPmodeFileName='/afs/cern.ch/user/d/damorim/work/GitIRIS/LHC_IW_model/Coll_settings/TCTPmode_Vs_fgap_BS.txt';
+	TCTPmodeFileName=os.path.dirname(param_filename)+'/TCTPmode_Vs_fgap_BS.txt';
 
         fg,r1,r2,q1,q2,f1,f2=np.loadtxt(TCTPmodeFileName, delimiter='\t',skiprows=1,unpack=True);
         hg=fg/2;
@@ -670,81 +670,6 @@ def LHC_TDI_iw_model_with_geom(name,halfgap,angle,gamma,wake_calc=False,
     return imp_RW,wake_RW,imp_geom,wake_geom;
 
 
-def LHC_manycoll_iw_model_with_geom(E,avbetax,avbetay,param_filename,settings_filename,
-        beta_filename,wake_calc=False,ftypescan=2,nflog=100,zpar=z_param(),namesref=None,
-        coatingmat=None,coatingthickness=0,TDIcoating='postLS1',BPM=False,
-        flag_wakefiles=False,fcutoffBB=5e9,lxplusbatch=None,comment='',dire='',
-        assymetry_factor_TCL6=1.):
-
-    ''' creates an impedance or wake model for all collimators.
-    E is the energy in eV,
-    avbetax and avbetay the average beta functions used for the weighting,
-    param_filename is the file with all parameters except half-gaps and betas,
-    settings_filename is the file with half-gaps (in m),
-    beta_filename the file with beta functions (in m),
-    wake_calc selects the wake computation if True.
-    nflog is the number of frequencies per decade,
-    ftypescan the type of frequency scan (0,1 or 2: logarithmic only,
-    linear only or logarithmic with refinement around high-frequency resonance(s) ).
-    zpar gives the distance scan for the wake.
-    namesref are the coll. names (from param_filename) to select (if None take all),
-    coatingmat and coatingthickness is the info about an added coating (material
-    name + thickness or layer object directly in coatingmat).
-    TDIcoating indicates kind of coatgin for first block of TDI: can be 'preLS1'
-    (5mum Ti) or 'postLS1' (1mum NEG + 2mum CU + 0.3mum NEG + 5mum Ti) or directly
-    a list of layer objects
-    BPM: geometry contains a BPM cavity if BPM is True, otherwise old LHC coll. geometry
-    flag_wakefiles: True to use GdFidl wake potential files instead of Stupakov
-
-    fcutoffBB: cutoff frequency for broad-band model of geometric impedance
-    of collimators
-
-    lxplusbatch: if None, no use of lxplus batch system
-                   if 'launch' -> launch calculation on lxplus on queue 'queue'
-                   if 'retrieve' -> retrieve outputs
-    dire contains the directory name where to put the outputs (default='./'=directory of IW2D)
-
-    assymetry_factor_TCL6: assymetry factor between the distance beam-jaw
-    in the case of the TCL6 (1 means that jaws are symmetric).
-
-    In this version, the parameter file can contain several material columns
-    (with the associated thickness columns) and the geometric impedance is
-    taken into account'''
-
-    e,m0,c,E0=proton_param();
-    gamma=E*e/E0;
-
-    # read files
-    namesref,material,thick,angle,length,halfgap,betax,betay=read_coll_files_several_mat(param_filename,settings_filename,beta_filename,namesref=namesref);
-    #print len(namesref),material,angle,length,halfgap,betax,betay
-
-    # main loop to construct model
-    imp_mod_RW=[];wake_mod_RW=[];imp_mod_geom=[];wake_mod_geom=[];
-    for iname,name in enumerate(namesref):
-
-        fminrefine=1.e11;fmaxrefine=5.e12;nrefine=5000;
-
-        # reorder materials and thicknesses, and add coating in case
-        materials=[material[n][iname] for n in range(len(material))];
-        thicks=[thick[n][iname] for n in range(0,len(material)-1)];#thicks.append(np.inf);
-
-        assymetry_factor=1;comment_assym=''; # by default, jaws are symmetric
-        if name.startswith('TCDQ'): assymetry_factor=0; # single jaw
-        if name.startswith('TCL.6'):
-            assymetry_factor=assymetry_factor_TCL6; # assymetric jaws for TCL6
-        if (assymetry_factor != 1.): comment_assym='_assym'+float_to_str(assymetry_factor);
-        imp_RW,wake_RW,imp_geom,wake_geom=LHC_singlecoll_iw_model_with_geom(name,materials,halfgap[iname],angle[iname],gamma,length[iname],thickness=thicks,wake_calc=wake_calc,fpar=freq_param(ftypescan=ftypescan,nflog=nflog,fminrefine=fminrefine,
-                fmaxrefine=fmaxrefine,nrefine=nrefine),zpar=zpar,BPM=BPM,
-                flag_wakefiles=flag_wakefiles,fcutoffBB=fcutoffBB,lxplusbatch=lxplusbatch,
-                comment=comment+'_'+materials[0]+'_'+float_to_str(round(halfgap[iname]*1e5)/1e2)+'mm'+comment_assym,
-                dire=dire,assymetry_factor=assymetry_factor,param_filename=param_filename);
-
-        add_impedance_wake(imp_mod_RW,imp_RW,betax[iname]/avbetax,betay[iname]/avbetay);
-        add_impedance_wake(wake_mod_RW,wake_RW,betax[iname]/avbetax,betay[iname]/avbetay);
-        add_impedance_wake(imp_mod_geom,imp_geom,betax[iname]/avbetax,betay[iname]/avbetay);
-        add_impedance_wake(wake_mod_geom,wake_geom,betax[iname]/avbetax,betay[iname]/avbetay);
-
-    return imp_mod_RW,wake_mod_RW,imp_mod_geom,wake_mod_geom;
 
 def LHC_manycoll_iw_model_with_geom_v2(E,avbetax,avbetay,param_filename,wake_calc=False,ftypescan=2,nflog=100,zpar=z_param(),namesref=None,BPM=False,flag_wakefiles=False,fcutoffBB=5e9,lxplusbatch=None,comment='',dire='',assymetry_factor_TCL6=1.,root_result=path_here+'../../../DELPHI_results/LHC'):
 
