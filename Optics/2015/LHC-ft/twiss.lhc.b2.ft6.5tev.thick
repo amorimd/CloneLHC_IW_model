@@ -41,8 +41,8 @@
 @ SYNCH_5          %le                   0
 @ TITLE            %08s "no-title"
 @ ORIGIN           %22s "MAD-X 5.02.00 Linux 64"
-@ DATE             %08s "21/09/16"
-@ TIME             %08s "17.03.50"
+@ DATE             %08s "27/09/16"
+@ TIME             %08s "11.45.44"
 * NAME               KEYWORD                             S                  L               BETX               BETY                  X                 PX                  Y                 PY                MUX                MUY 
 $ %s                 %s                                %le                %le                %le                %le                %le                %le                %le                %le                %le                %le 
  "LHCB2$START"       "MARKER"                             0                  0        11.00000106        11.00000007    0.0005500007678   -1.551319112e-11    4.667616658e-11    0.0001400000015                  0                  0
